@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Actors" ALTER COLUMN "imageURL" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "Director" ALTER COLUMN "imageURL" DROP NOT NULL;
