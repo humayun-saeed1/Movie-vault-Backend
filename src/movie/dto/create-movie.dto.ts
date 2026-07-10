@@ -20,6 +20,11 @@ export class CreateMovieDto {
     @IsString()
     trailerURL: string;
 
+    @IsString()
+    @IsOptional()
+    posterURL: string;
+
+
     @IsArray()
     @IsOptional()
     @IsString({ each: true })

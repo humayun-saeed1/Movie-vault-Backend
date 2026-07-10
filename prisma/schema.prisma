@@ -21,6 +21,7 @@ model Movie{
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   trailerURL        String
+  posterURl         String?
 
  directors          Director[]
  actors             Actors[]
