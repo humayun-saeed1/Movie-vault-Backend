@@ -22,7 +22,7 @@ export class CreateMovieDto {
 
     @IsString()
     @IsOptional()
-    posterURL: string;
+    posterURl: string;
 
 
     @IsArray()
