@@ -50,3 +50,21 @@ model Director{
 
   movies              Movie[]
 }
+
+enum Role{
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+model User{
+  id                  String    @id @default(cuid())
+  username            String   @unique 
+  email               String  @unique 
+  password            String 
+  role                Role    @default(VIEWER)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("users")
+}
