@@ -15,6 +15,8 @@ async function bootstrap() {
     .setTitle('Movie Vault Single CRUD')
     .setDescription('Movie Table CRUD API Documentation')
     .setVersion('1.0')
+    .addBearerAuth()
+    .addBasicAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
