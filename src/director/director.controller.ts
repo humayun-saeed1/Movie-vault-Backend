@@ -20,11 +20,19 @@ export class DirectorController {
     return this.directorService.create(createDirectorDto);
   }
 
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
   findAll() {
     return this.directorService.findAll();
   }
 
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-by-id/:id')
   findOne(@Param('id') id: string) {
     return this.directorService.findOne(id);
