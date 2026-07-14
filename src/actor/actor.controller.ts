@@ -20,11 +20,19 @@ export class ActorController {
     return this.actorService.create(createActorDto);
   }
 
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
   findAll() {
     return this.actorService.findAll();
   }
-
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-by-id/:id')
   findOne(@Param('id') id: string) {
     return this.actorService.findOne(id);
