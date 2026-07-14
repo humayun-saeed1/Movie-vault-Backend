@@ -20,11 +20,19 @@ export class MovieController {
     return this.movieService.create(createMovieDto);
   }
 
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
   findAll() {
     return this.movieService.findAll();
   }
 
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin', 'Editor', 'Viewer')
   @Get('get/:id')
   findOne(@Param('id') id: string) {
     return this.movieService.findOne(id);
