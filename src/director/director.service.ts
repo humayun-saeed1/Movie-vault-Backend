@@ -65,10 +65,19 @@ export class DirectorService {
     });
   }
 
-  async update(id: string, updateDirectorDto: UpdateDirectorDto) {
+  async update(id: string, updateDirectorDto: UpdateDirectorDto, role: string) {
+    const { movieID, ...directorData } = updateDirectorDto;
+    const status = role.toUpperCase() === 'ADMIN' ? Status.APPROVED : Status.PENDING;
+
     return this.prisma.director.update({
       where: { id },
-      data: updateDirectorDto
+      data: {
+        ...directorData,
+        status,
+        movies: movieID ? {
+          set: movieID.map((id: string) => ({ id }))
+        } : undefined
+      }
     });
   }
 

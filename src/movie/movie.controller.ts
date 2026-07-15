@@ -47,8 +47,9 @@ export class MovieController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Patch('edit/:id')
-  update(@Param('id') id: string, @Body() updateMovieDto: UpdateMovieDto) {
-    return this.movieService.update(id, updateMovieDto);
+  update(@Param('id') id: string, @Body() updateMovieDto: UpdateMovieDto, @Req() req) {
+    const userRole = req.user.role;
+    return this.movieService.update(id, updateMovieDto, userRole);
   }
 
   @ApiBearerAuth()

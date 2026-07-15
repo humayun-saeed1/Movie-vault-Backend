@@ -70,17 +70,20 @@ export class MovieService {
     });
   }
 
-  async update(id: string, updateMovieDto: UpdateMovieDto) {
+  async update(id: string, updateMovieDto: UpdateMovieDto, role: string) {
     const { actorID, directorID, ...movieData } = updateMovieDto;
+    const status = role.toUpperCase() === 'ADMIN' ? Status.APPROVED : Status.PENDING;
+
     return this.prisma.movie.update({
       where: { id },
       data: {
         ...movieData,
+        status,
         actors: actorID ? {
-          connect: actorID?.map(id => ({ id })) || []
+          set: actorID.map(id => ({ id }))
         } : undefined,
         directors: directorID ? {
-          connect: directorID?.map(id => ({ id })) || []
+          set: directorID.map(id => ({ id }))
         } : undefined
       }
     });

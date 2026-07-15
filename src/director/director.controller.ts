@@ -75,4 +75,7 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin')
   @Patch('reject/:id')
-  reject(@Param('id') id: strin
+  reject(@Param('id') id: string) {
+    return this.directorService.reject(id);
+  }
+}
