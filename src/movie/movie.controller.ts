@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { MovieService } from './movie.service.js';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
@@ -16,8 +16,10 @@ export class MovieController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Post('create')
-  create(@Body() createMovieDto: CreateMovieDto) {
-    return this.movieService.create(createMovieDto);
+  create(@Body() createMovieDto: CreateMovieDto, @Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.movieService.create(createMovieDto, userId, userRole);
   }
 
   @ApiBearerAuth()
@@ -25,8 +27,10 @@ export class MovieController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll() {
-    return this.movieService.findAll();
+  findAll(@Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.movieService.findAll(userId, userRole);
   }
 
   @ApiBearerAuth()
@@ -43,8 +47,9 @@ export class MovieController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Patch('edit/:id')
-  update(@Param('id') id: string, @Body() updateMovieDto: UpdateMovieDto) {
-    return this.movieService.update(id, updateMovieDto);
+  update(@Param('id') id: string, @Body() updateMovieDto: UpdateMovieDto, @Req() req) {
+    const userRole = req.user.role;
+    return this.movieService.update(id, updateMovieDto, userRole);
   }
 
   @ApiBearerAuth()
@@ -54,5 +59,23 @@ export class MovieController {
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.movieService.remove(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.movieService.approve(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.movieService.reject(id);
   }
 }

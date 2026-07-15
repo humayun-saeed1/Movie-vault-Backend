@@ -25,6 +25,6 @@ export class RoleGuard implements CanActivate {
         if (!user) {
             throw new ForbiddenException('User not authenticated');
         }
-        return requiredRoles.some((role) => user.role === role);
+        return requiredRoles.some((role) => user.role?.toUpperCase() === role.toUpperCase());
     }
 }

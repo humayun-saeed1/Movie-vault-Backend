@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { ActorService } from './actor.service.js';
 import { CreateActorDto } from './dto/create-actor.dto.js';
 import { UpdateActorDto } from './dto/update-actor.dto.js';
@@ -16,8 +16,10 @@ export class ActorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Post('create')
-  create(@Body() createActorDto: CreateActorDto) {
-    return this.actorService.create(createActorDto);
+  create(@Body() createActorDto: CreateActorDto, @Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.actorService.create(createActorDto, userId, userRole);
   }
 
 
@@ -26,8 +28,10 @@ export class ActorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll() {
-    return this.actorService.findAll();
+  findAll(@Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.actorService.findAll(userId, userRole);
   }
   @ApiBearerAuth()
   @ApiBasicAuth()
@@ -42,8 +46,9 @@ export class ActorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Patch('edit/:id')
-  update(@Param('id') id: string, @Body() updateActorDto: UpdateActorDto) {
-    return this.actorService.update(id, updateActorDto);
+  update(@Param('id') id: string, @Body() updateActorDto: UpdateActorDto, @Req() req) {
+    const userRole = req.user.role;
+    return this.actorService.update(id, updateActorDto, userRole);
   }
   @ApiBearerAuth()
   @ApiBasicAuth()
@@ -52,5 +57,23 @@ export class ActorController {
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.actorService.remove(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.actorService.approve(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.actorService.reject(id);
   }
 }

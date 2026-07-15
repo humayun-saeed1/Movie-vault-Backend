@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { DirectorService } from './director.service.js';
 import { CreateDirectorDto } from './dto/create-director.dto.js';
 import { UpdateDirectorDto } from './dto/update-director.dto.js';
@@ -16,8 +16,10 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Post('create')
-  create(@Body() createDirectorDto: CreateDirectorDto) {
-    return this.directorService.create(createDirectorDto);
+  create(@Body() createDirectorDto: CreateDirectorDto, @Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.directorService.create(createDirectorDto, userId, userRole);
   }
 
   @ApiBearerAuth()
@@ -25,8 +27,10 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll() {
-    return this.directorService.findAll();
+  findAll(@Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.directorService.findAll(userId, userRole);
   }
 
   @ApiBearerAuth()
@@ -43,8 +47,9 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Patch('edit/:id')
-  update(@Param('id') id: string, @Body() updateDirectorDto: UpdateDirectorDto) {
-    return this.directorService.update(id, updateDirectorDto);
+  update(@Param('id') id: string, @Body() updateDirectorDto: UpdateDirectorDto, @Req() req) {
+    const userRole = req.user.role;
+    return this.directorService.update(id, updateDirectorDto, userRole);
   }
 
   @ApiBearerAuth()
@@ -54,5 +59,23 @@ export class DirectorController {
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.directorService.remove(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.directorService.approve(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.directorService.reject(id);
   }
 }
