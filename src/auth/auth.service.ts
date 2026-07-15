@@ -96,4 +96,17 @@ export class AuthService {
       data: { status: Status.REJECTED }
     });
   }
+
+  async getUserMe(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true
+      }
+    })
+  }
 }

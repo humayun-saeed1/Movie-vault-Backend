@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, UseGuards, Get } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -36,5 +36,14 @@ export class AuthController {
   @Patch('reject-user/:id')
   rejectUser(@Param('id') id: string) {
     return this.authService.rejectUser(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Get('get-user-me/:id')
+  getUserMe(@Param('id') id: string) {
+    return this.authService.getUserMe(id);
   }
 }
