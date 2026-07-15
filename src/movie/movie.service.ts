@@ -7,12 +7,15 @@ import { UpdateMovieDto } from './dto/update-movie.dto.js';
 export class MovieService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(createMovieDto: CreateMovieDto) {
+  async create(createMovieDto: CreateMovieDto, creatorId: string) {
     try {
       const { actorID, directorID, ...movieData } = createMovieDto;
       return await this.prisma.movie.create({
         data: {
           ...movieData,
+          creator: {
+            connect: { id: creatorId }
+          },
           actors: actorID ? {
             connect: actorID?.map(id => ({ id })) || []
           } : undefined,

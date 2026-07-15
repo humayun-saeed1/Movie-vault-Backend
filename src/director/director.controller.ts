@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { DirectorService } from './director.service.js';
 import { CreateDirectorDto } from './dto/create-director.dto.js';
 import { UpdateDirectorDto } from './dto/update-director.dto.js';
@@ -16,8 +16,9 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Post('create')
-  create(@Body() createDirectorDto: CreateDirectorDto) {
-    return this.directorService.create(createDirectorDto);
+  create(@Body() createDirectorDto: CreateDirectorDto, @Req() req) {
+    const userId = req.user.id || req.user.sub;
+    return this.directorService.create(createDirectorDto, userId);
   }
 
   @ApiBearerAuth()

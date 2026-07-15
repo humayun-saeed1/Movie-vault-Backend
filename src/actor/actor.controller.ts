@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { ActorService } from './actor.service.js';
 import { CreateActorDto } from './dto/create-actor.dto.js';
 import { UpdateActorDto } from './dto/update-actor.dto.js';
@@ -16,8 +16,9 @@ export class ActorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Post('create')
-  create(@Body() createActorDto: CreateActorDto) {
-    return this.actorService.create(createActorDto);
+  create(@Body() createActorDto: CreateActorDto, @Req() req) {
+    const userId = req.user.id || req.user.sub;
+    return this.actorService.create(createActorDto, userId);
   }
 
 

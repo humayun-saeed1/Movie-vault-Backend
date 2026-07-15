@@ -5,13 +5,16 @@ import { PrismaService } from '../prisma/prisma.service.js';
 @Injectable()
 export class DirectorService {
   constructor(private readonly prisma: PrismaService) { }
-  async create(createDirectorDto: CreateDirectorDto) {
+  async create(createDirectorDto: CreateDirectorDto, creatorId: string) {
     try {
       const { movieID, ...directorData } = createDirectorDto;
 
       return this.prisma.director.create({
         data: {
           ...directorData,
+          creator: {
+            connect: { id: creatorId }
+          },
           ...(movieID?.length && {
             movies: {
               connect: movieID.map((id: string) => ({ id }))

@@ -7,13 +7,16 @@ import { PrismaService } from '../prisma/prisma.service.js';
 export class ActorService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(createActorDto: CreateActorDto) {
+  async create(createActorDto: CreateActorDto, creatorId: string) {
     try {
       const { movieID, ...actorData } = createActorDto;
 
       return this.prisma.actors.create({
         data: {
           ...actorData,
+          creator: {
+            connect: { id: creatorId }
+          },
           ...(movieID?.length && {
             movies: {
               connect: movieID.map((id: string) => ({ id }))
