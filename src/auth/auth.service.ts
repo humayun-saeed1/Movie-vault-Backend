@@ -83,5 +83,17 @@ export class AuthService {
 
   }
 
+  async approveUser(id: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { status: Status.APPROVED }
+    });
+  }
 
+  async rejectUser(id: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { status: Status.REJECTED }
+    });
+  }
 }

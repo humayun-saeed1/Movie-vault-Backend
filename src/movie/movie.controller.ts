@@ -18,7 +18,8 @@ export class MovieController {
   @Post('create')
   create(@Body() createMovieDto: CreateMovieDto, @Req() req) {
     const userId = req.user.id || req.user.sub;
-    return this.movieService.create(createMovieDto, userId);
+    const userRole = req.user.role;
+    return this.movieService.create(createMovieDto, userId, userRole);
   }
 
   @ApiBearerAuth()
@@ -26,8 +27,10 @@ export class MovieController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll() {
-    return this.movieService.findAll();
+  findAll(@Req() req) {
+    const userId = req.user.id || req.user.sub;
+    const userRole = req.user.role;
+    return this.movieService.findAll(userId, userRole);
   }
 
   @ApiBearerAuth()
@@ -55,5 +58,23 @@ export class MovieController {
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.movieService.remove(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.movieService.approve(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.movieService.reject(id);
   }
 }

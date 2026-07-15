@@ -1,7 +1,11 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { AuthGuard } from './auth.guard.js';
+import { RoleGuard } from './role.guard.js';
+import { Roles } from './role.decorator.js';
+import { ApiBearerAuth, ApiBasicAuth } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -16,4 +20,21 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('approve-user/:id')
+  approveUser(@Param('id') id: string) {
+    return this.authService.approveUser(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
+  @Patch('reject-user/:id')
+  rejectUser(@Param('id') id: string) {
+    return this.authService.rejectUser(id);
+  }
 }
