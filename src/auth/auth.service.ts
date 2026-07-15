@@ -4,15 +4,14 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto.js';
-import { Role } from '#generated/prisma/index.js';
+import { Role, Status } from '#generated/prisma/index.js';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService, private readonly jwtService: JwtService) { }
 
   async register(registerDto: RegisterDto) {
-    const { username, email, password } = registerDto;
-
+    const { username, email, password, role } = registerDto;
     const existingemail = await this.prisma.user.findUnique({
       where: { email }
     });
@@ -27,6 +26,12 @@ export class AuthService {
       throw new ConflictException("User with this username already exists.");
     }
 
+    let finalrole: Role = Role.VIEWER;
+    if (role === 'EDITOR') {
+      finalrole = Role.EDITOR;
+    }
+
+    const finalStatus = (finalrole === Role.EDITOR) ? Status.PENDING : Status.APPROVED;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
@@ -34,7 +39,8 @@ export class AuthService {
         username,
         email,
         password: hashedPassword,
-        role: Role.VIEWER
+        role: finalrole,
+        status: finalStatus
       }
     });
     const { password: _, ...userWithoutPassword } = user;
@@ -58,6 +64,13 @@ export class AuthService {
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
       throw new UnauthorizedException("Invalid Credentials.");
+    }
+
+    if (user.status === Status.PENDING) {
+      throw new UnauthorizedException("Your account is pending approval.");
+    }
+    if (user.status === Status.REJECTED) {
+      throw new UnauthorizedException("Your account has been rejected.");
     }
     const payload = { sub: user.id, username: user.username, role: user.role };
     return {

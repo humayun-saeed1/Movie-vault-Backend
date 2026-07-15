@@ -83,6 +83,7 @@ model User{
   role                Role    @default(VIEWER)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+  status              Status  @default(PENDING)
 
   createdMovies       Movie[]
   createdActors       Actors[]
