@@ -83,6 +83,18 @@ export class AuthService {
 
   }
 
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true
+      }
+    });
+  }
+
   async approveUser(id: string) {
     return this.prisma.user.update({
       where: { id },
