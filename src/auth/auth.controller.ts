@@ -24,6 +24,15 @@ export class AuthController {
   @ApiBasicAuth()
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin')
+  @Get('get-all')
+  getAllUsers() {
+    return this.authService.getAllUsers();
+  }
+
+  @ApiBearerAuth()
+  @ApiBasicAuth()
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('Admin')
   @Patch('approve-user/:id')
   approveUser(@Param('id') id: string) {
     return this.authService.approveUser(id);
