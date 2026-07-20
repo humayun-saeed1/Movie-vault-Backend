@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { MovieService } from './movie.service.js';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
@@ -27,10 +27,10 @@ export class MovieController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll(@Req() req) {
+  findAll(@Req() req, @Query() query: any) {
     const userId = req.user.id || req.user.sub;
     const userRole = req.user.role;
-    return this.movieService.findAll(userId, userRole);
+    return this.movieService.findAll(userId, userRole, query);
   }
 
   @ApiBearerAuth()

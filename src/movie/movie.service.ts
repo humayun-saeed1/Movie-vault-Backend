@@ -36,8 +36,10 @@ export class MovieService {
     }
   }
 
-  async findAll(userId: string, role: string) {
-    let whereClause = {};
+  async findAll(userId: string, role: string, query: any = {}) {
+    const { search, sortBy, sortOrder = 'asc', genre, director, actor, year, page, limit } = query;
+    let whereClause: any = {};
+
     if (role.toUpperCase() === 'ADMIN') {
       whereClause = {};
     } else if (role.toUpperCase() === 'EDITOR') {
@@ -51,13 +53,63 @@ export class MovieService {
       whereClause = { status: Status.APPROVED };
     }
 
-    return this.prisma.movie.findMany({
-      where: whereClause,
-      include: {
-        actors: true,
-        directors: true
-      }
-    })
+    if (search) {
+      whereClause.name = { contains: search, mode: 'insensitive' };
+    }
+    if (year) {
+      whereClause.releaseyear = parseInt(year);
+    }
+    if (genre) {
+      whereClause.genre = { contains: genre, mode: 'insensitive' };
+    }
+    if (director) {
+      whereClause.directors = { some: { name: { contains: director, mode: 'insensitive' } } };
+    }
+    if (actor) {
+      whereClause.actors = { some: { name: { contains: actor, mode: 'insensitive' } } };
+    }
+
+    let orderByClause: any = { createdAt: 'desc' };
+    if (sortBy === 'year') {
+      orderByClause = { releaseyear: sortOrder };
+    } else if (sortBy === 'title') {
+      orderByClause = { name: sortOrder };
+    }
+
+    let skip: number | undefined = undefined;
+    let take: number | undefined = undefined;
+
+    if (page && limit) {
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      skip = (pageNumber - 1) * limitNumber;
+      take = limitNumber;
+    }
+
+    const [movies, total] = await Promise.all([
+      this.prisma.movie.findMany({
+        where: whereClause,
+        orderBy: orderByClause,
+        include: { actors: true, directors: true },
+        skip,
+        take
+      }),
+      this.prisma.movie.count({ where: whereClause })
+    ]);
+
+    if (page && limit) {
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      return {
+        movies,
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber)
+      };
+    }
+
+    return movies;
   }
 
   async findOne(id: string) {
