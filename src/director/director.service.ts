@@ -31,8 +31,9 @@ export class DirectorService {
     }
   }
 
-  async findAll(userId: string, role: string) {
-    let whereClause = {};
+  async findAll(userId: string, role: string, query: any = {}) {
+    const { search, page, limit } = query;
+    let whereClause: any = {};
     if (role.toUpperCase() === 'ADMIN') {
       whereClause = {};
     } else if (role.toUpperCase() === 'EDITOR') {
@@ -46,14 +47,44 @@ export class DirectorService {
       whereClause = { status: Status.APPROVED };
     }
 
-    return this.prisma.director.findMany(
-      {
+    if (search) {
+      whereClause.name = { contains: search, mode: 'insensitive' };
+    }
+
+    let skip: number | undefined = undefined;
+    let take: number | undefined = undefined;
+
+    if (page && limit) {
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      skip = (pageNumber - 1) * limitNumber;
+      take = limitNumber;
+    }
+
+    const [directors, total] = await Promise.all([
+      this.prisma.director.findMany({
         where: whereClause,
-        include: {
-          movies: true
-        }
-      }
-    );
+        orderBy: { createdAt: 'desc' },
+        include: { movies: true },
+        skip,
+        take
+      }),
+      this.prisma.director.count({ where: whereClause })
+    ]);
+
+    if (page && limit) {
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      return {
+        directors,
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber)
+      };
+    }
+
+    return directors;
   }
 
   async findOne(id: string) {

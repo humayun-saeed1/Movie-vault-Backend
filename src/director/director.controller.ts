@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { DirectorService } from './director.service.js';
 import { CreateDirectorDto } from './dto/create-director.dto.js';
 import { UpdateDirectorDto } from './dto/update-director.dto.js';
@@ -27,10 +27,10 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll(@Req() req) {
+  findAll(@Req() req, @Query() query: any) {
     const userId = req.user.id || req.user.sub;
     const userRole = req.user.role;
-    return this.directorService.findAll(userId, userRole);
+    return this.directorService.findAll(userId, userRole, query);
   }
 
   @ApiBearerAuth()

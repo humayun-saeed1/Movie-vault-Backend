@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { ActorService } from './actor.service.js';
 import { CreateActorDto } from './dto/create-actor.dto.js';
 import { UpdateActorDto } from './dto/update-actor.dto.js';
@@ -28,10 +28,10 @@ export class ActorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor', 'Viewer')
   @Get('get-all')
-  findAll(@Req() req) {
+  findAll(@Req() req, @Query() query: any) {
     const userId = req.user.id || req.user.sub;
     const userRole = req.user.role;
-    return this.actorService.findAll(userId, userRole);
+    return this.actorService.findAll(userId, userRole, query);
   }
   @ApiBearerAuth()
   @ApiBasicAuth()
