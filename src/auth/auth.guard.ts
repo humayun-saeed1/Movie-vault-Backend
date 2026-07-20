@@ -36,25 +36,6 @@ export class AuthGuard implements CanActivate {
             }
         }
 
-        if (authHeader.startsWith('Basic ')) {
-            const credentials = authHeader.split(' ')[1];
-            try {
-                const decodedCredentials = Buffer.from(credentials, 'base64').toString('ascii');
-                const [identity, ...passwordParts] = decodedCredentials.split(':');
-                const password = passwordParts.join(':');
-                if (!identity || !password) {
-                    return false;
-                }
-                const result = await this.authService.login({ identity, password });
-                if (result && result.user) {
-                    request.user = result.user;
-                    return true;
-                }
-            } catch (error) {
-                return false;
-            }
-        }
-
         return false;
     }
 }
