@@ -61,21 +61,5 @@ export class DirectorController {
     return this.directorService.remove(id);
   }
 
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('approve/:id')
-  approve(@Param('id') id: string) {
-    return this.directorService.approve(id);
-  }
 
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('reject/:id')
-  reject(@Param('id') id: string) {
-    return this.directorService.reject(id);
-  }
 }

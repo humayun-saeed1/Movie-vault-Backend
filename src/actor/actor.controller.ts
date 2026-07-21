@@ -59,21 +59,5 @@ export class ActorController {
     return this.actorService.remove(id);
   }
 
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('approve/:id')
-  approve(@Param('id') id: string) {
-    return this.actorService.approve(id);
-  }
 
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('reject/:id')
-  reject(@Param('id') id: string) {
-    return this.actorService.reject(id);
-  }
 }

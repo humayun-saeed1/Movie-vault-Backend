@@ -26,7 +26,6 @@ model Movie{
  directors          Director[]
  actors             Actors[]
 
- status             Status  @default(PENDING)
  createrId          String
  creator            User     @relation(fields: [createrId], references: [id])
 }
@@ -40,7 +39,6 @@ model Actors {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  status              Status  @default(PENDING)
   createrId           String
   creator             User     @relation(fields: [createrId], references: [id])
 
@@ -56,18 +54,12 @@ model Director{
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  status              Status  @default(PENDING)
   createrId           String
   creator             User     @relation(fields: [createrId], references: [id])
 
   movies              Movie[]
 }
 
-enum Status {
-  PENDING
-  APPROVED
-  REJECTED
-}
 
 enum Role{
   ADMIN
@@ -83,7 +75,7 @@ model User{
   role                Role    @default(VIEWER)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
-  status              Status  @default(PENDING)
+
 
   createdMovies       Movie[]
   createdActors       Actors[]

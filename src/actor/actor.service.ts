@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { CreateActorDto } from './dto/create-actor.dto.js';
 import { UpdateActorDto } from './dto/update-actor.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { Status } from '#generated/prisma/index.js';
 
 @Injectable()
 export class ActorService {
@@ -11,7 +10,6 @@ export class ActorService {
   async create(createActorDto: CreateActorDto, creatorId: string, role: string) {
     try {
       const { movieID, ...actorData } = createActorDto;
-      const status = role.toUpperCase() === 'ADMIN' ? Status.APPROVED : Status.PENDING;
 
       return this.prisma.actors.create({
         data: {
@@ -19,7 +17,7 @@ export class ActorService {
           creator: {
             connect: { id: creatorId }
           },
-          status,
+
           ...(movieID?.length && {
             movies: {
               connect: movieID.map((id: string) => ({ id }))
@@ -36,18 +34,6 @@ export class ActorService {
   async findAll(userId: string, role: string, query: any = {}) {
     const { search, page, limit } = query;
     let whereClause: any = {};
-    if (role.toUpperCase() === 'ADMIN') {
-      whereClause = {};
-    } else if (role.toUpperCase() === 'EDITOR') {
-      whereClause = {
-        OR: [
-          { status: Status.APPROVED },
-          { createrId: userId }
-        ]
-      };
-    } else {
-      whereClause = { status: Status.APPROVED };
-    }
 
     if (search) {
       whereClause.name = { contains: search, mode: 'insensitive' };
@@ -102,15 +88,13 @@ export class ActorService {
 
   async update(id: string, updateActorDto: UpdateActorDto, role: string) {
     const { movieID, ...actorData } = updateActorDto;
-    const status = role.toUpperCase() === 'ADMIN' ? Status.APPROVED : Status.PENDING;
-
     return this.prisma.actors.update({
       where: {
         id
       },
       data: {
         ...actorData,
-        status,
+
         movies: movieID ? {
           set: movieID.map((id: string) => ({ id }))
         } : undefined
@@ -126,17 +110,5 @@ export class ActorService {
     });
   }
 
-  async approve(id: string) {
-    return this.prisma.actors.update({
-      where: { id },
-      data: { status: Status.APPROVED }
-    });
-  }
 
-  async reject(id: string) {
-    return this.prisma.actors.update({
-      where: { id },
-      data: { status: Status.REJECTED }
-    });
-  }
 }
