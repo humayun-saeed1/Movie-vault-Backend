@@ -7,6 +7,9 @@ import { MovieModule } from './movie/movie.module.js';
 import { ActorModule } from './actor/actor.module.js';
 import { DirectorModule } from './director/director.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { ReviewsModule } from './reviews/reviews.module.js';
+import { FavouriteModule } from './favourite/favourite.module.js';
+import { WatchlistModule } from './watchlist/watchlist.module.js';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { AuthModule } from './auth/auth.module.js';
     ActorModule,
     DirectorModule,
     AuthModule,
+    ReviewsModule,
+    FavouriteModule,
+    WatchlistModule,
   ],
   controllers: [AppController],
   providers: [AppService],
