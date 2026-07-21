@@ -71,30 +71,76 @@ export class MovieService {
       take = limitNumber;
     }
 
-    const [movies, total] = await Promise.all([
-      this.prisma.movie.findMany({
+    // If sorting by rating, we have to fetch all, sort in memory, and then paginate manually.
+    if (sortBy === 'rating') {
+      const allMovies = await this.prisma.movie.findMany({
         where: whereClause,
-        orderBy: orderByClause,
-        include: { actors: true, directors: true },
-        skip,
-        take
-      }),
-      this.prisma.movie.count({ where: whereClause })
-    ]);
+        include: { actors: true, directors: true, reviews: { select: { rating: true } } },
+      });
 
-    if (page && limit) {
-      const pageNumber = parseInt(page);
-      const limitNumber = parseInt(limit);
-      return {
-        movies,
-        total,
-        page: pageNumber,
-        limit: limitNumber,
-        totalPages: Math.ceil(total / limitNumber)
-      };
+      const moviesWithRating = allMovies.map(movie => {
+        const avg = movie.reviews.length > 0 
+          ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length 
+          : 0;
+        return { ...movie, averageRating: avg };
+      });
+
+      moviesWithRating.sort((a, b) => {
+        return sortOrder === 'asc' ? a.averageRating - b.averageRating : b.averageRating - a.averageRating;
+      });
+
+      const total = moviesWithRating.length;
+      let paginated = moviesWithRating;
+      if (skip !== undefined && take !== undefined) {
+        paginated = moviesWithRating.slice(skip, skip + take);
+      }
+
+      if (page && limit) {
+        const pageNumber = parseInt(page);
+        const limitNumber = parseInt(limit);
+        return {
+          movies: paginated,
+          total,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(total / limitNumber)
+        };
+      }
+      return paginated;
+    } else {
+      // Normal query
+      const [movies, total] = await Promise.all([
+        this.prisma.movie.findMany({
+          where: whereClause,
+          orderBy: orderByClause,
+          include: { actors: true, directors: true, reviews: { select: { rating: true } } },
+          skip,
+          take
+        }),
+        this.prisma.movie.count({ where: whereClause })
+      ]);
+
+      const moviesWithRating = movies.map(movie => {
+        const avg = movie.reviews.length > 0 
+          ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length 
+          : 0;
+        return { ...movie, averageRating: avg };
+      });
+
+      if (page && limit) {
+        const pageNumber = parseInt(page);
+        const limitNumber = parseInt(limit);
+        return {
+          movies: moviesWithRating,
+          total,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(total / limitNumber)
+        };
+      }
+
+      return moviesWithRating;
     }
-
-    return movies;
   }
 
   async findOne(id: string) {
@@ -102,7 +148,13 @@ export class MovieService {
       where: { id },
       include: {
         actors: true,
-        directors: true
+        directors: true,
+        reviews: {
+          include: {
+            user: { select: { id: true, username: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
       }
     });
   }

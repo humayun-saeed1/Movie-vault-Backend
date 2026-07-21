@@ -28,6 +28,10 @@ model Movie{
 
  createrId          String
  creator            User     @relation(fields: [createrId], references: [id])
+
+ reviews     Review[]
+ watchlist   Watchlist[]
+ favourites  Favourite[]
 }
 
 model Actors {
@@ -81,5 +85,55 @@ model User{
   createdActors       Actors[]
   createdDirectors   Director[]
 
+  reviews          Review[]
+  watchlist        Watchlist[]
+  favourites       Favourite[]
+
   @@map("users")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // e.g., 1 to 10 stars
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  movieId   String
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  movieId   String
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  // Ensures a user can't add the same movie to their watchlist twice
+  @@unique([userId, movieId])
+  @@map("watchlists")
+}
+
+model Favourite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  movieId   String
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  // Ensures a user can't favourite the exact same movie twice
+  @@unique([userId, movieId])
+  @@map("favourites")
 }
