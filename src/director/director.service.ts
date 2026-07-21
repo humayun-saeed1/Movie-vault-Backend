@@ -2,22 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { CreateDirectorDto } from './dto/create-director.dto.js';
 import { UpdateDirectorDto } from './dto/update-director.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { Status } from '#generated/prisma/index.js';
 @Injectable()
 export class DirectorService {
   constructor(private readonly prisma: PrismaService) { }
   async create(createDirectorDto: CreateDirectorDto, creatorId: string, role: string) {
     try {
       const { movieID, ...directorData } = createDirectorDto;
-      const status = role.toUpperCase() === 'ADMIN' ? Status.APPROVED : Status.PENDING;
-
       return this.prisma.director.create({
         data: {
           ...directorData,
           creator: {
             connect: { id: creatorId }
           },
-          status,
+
           ...(movieID?.length && {
             movies: {
               connect: movieID.map((id: string) => ({ id }))
@@ -34,18 +31,6 @@ export class DirectorService {
   async findAll(userId: string, role: string, query: any = {}) {
     const { search, page, limit } = query;
     let whereClause: any = {};
-    if (role.toUpperCase() === 'ADMIN') {
-      whereClause = {};
-    } else if (role.toUpperCase() === 'EDITOR') {
-      whereClause = {
-        OR: [
-          { status: Status.APPROVED },
-          { createrId: userId }
-        ]
-      };
-    } else {
-      whereClause = { status: Status.APPROVED };
-    }
 
     if (search) {
       whereClause.name = { contains: search, mode: 'insensitive' };
@@ -98,13 +83,11 @@ export class DirectorService {
 
   async update(id: string, updateDirectorDto: UpdateDirectorDto, role: string) {
     const { movieID, ...directorData } = updateDirectorDto;
-    const status = role.toUpperCase() === 'ADMIN' ? Status.APPROVED : Status.PENDING;
-
     return this.prisma.director.update({
       where: { id },
       data: {
         ...directorData,
-        status,
+
         movies: movieID ? {
           set: movieID.map((id: string) => ({ id }))
         } : undefined
@@ -118,17 +101,5 @@ export class DirectorService {
     });
   }
 
-  async approve(id: string) {
-    return this.prisma.director.update({
-      where: { id },
-      data: { status: Status.APPROVED }
-    });
-  }
 
-  async reject(id: string) {
-    return this.prisma.director.update({
-      where: { id },
-      data: { status: Status.REJECTED }
-    });
-  }
 }

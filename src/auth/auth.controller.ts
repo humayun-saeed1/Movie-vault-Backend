@@ -33,18 +33,9 @@ export class AuthController {
   @ApiBasicAuth()
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin')
-  @Patch('approve-user/:id')
-  approveUser(@Param('id') id: string) {
-    return this.authService.approveUser(id);
-  }
-
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('reject-user/:id')
-  rejectUser(@Param('id') id: string) {
-    return this.authService.rejectUser(id);
+  @Post('create-editor')
+  createEditor(@Body() registerDto: RegisterDto) {
+    return this.authService.register({ ...registerDto, role: 'EDITOR' });
   }
 
   @ApiBearerAuth()

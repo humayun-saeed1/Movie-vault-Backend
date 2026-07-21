@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto.js';
-import { Role, Status } from '#generated/prisma/index.js';
+import { Role } from '#generated/prisma/index.js';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +31,6 @@ export class AuthService {
       finalrole = Role.EDITOR;
     }
 
-    const finalStatus = (finalrole === Role.EDITOR) ? Status.PENDING : Status.APPROVED;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
@@ -39,8 +38,7 @@ export class AuthService {
         username,
         email,
         password: hashedPassword,
-        role: finalrole,
-        status: finalStatus
+        role: finalrole
       }
     });
     const { password: _, ...userWithoutPassword } = user;
@@ -66,12 +64,6 @@ export class AuthService {
       throw new UnauthorizedException("Invalid Credentials.");
     }
 
-    if (user.status === Status.PENDING) {
-      throw new UnauthorizedException("Your account is pending approval.");
-    }
-    if (user.status === Status.REJECTED) {
-      throw new UnauthorizedException("Your account has been rejected.");
-    }
     const payload = { sub: user.id, username: user.username, role: user.role };
     return {
       token: await this.jwtService.signAsync(payload),
@@ -89,25 +81,12 @@ export class AuthService {
         id: true,
         username: true,
         email: true,
-        role: true,
-        status: true
+        role: true
       }
     });
   }
 
-  async approveUser(id: string) {
-    return this.prisma.user.update({
-      where: { id },
-      data: { status: Status.APPROVED }
-    });
-  }
 
-  async rejectUser(id: string) {
-    return this.prisma.user.update({
-      where: { id },
-      data: { status: Status.REJECTED }
-    });
-  }
 
   async getUserMe(id: string) {
     return this.prisma.user.findUnique({
@@ -116,8 +95,7 @@ export class AuthService {
         id: true,
         username: true,
         email: true,
-        role: true,
-        status: true
+        role: true
       }
     })
   }

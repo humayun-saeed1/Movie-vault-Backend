@@ -61,21 +61,5 @@ export class MovieController {
     return this.movieService.remove(id);
   }
 
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('approve/:id')
-  approve(@Param('id') id: string) {
-    return this.movieService.approve(id);
-  }
 
-  @ApiBearerAuth()
-  @ApiBasicAuth()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('Admin')
-  @Patch('reject/:id')
-  reject(@Param('id') id: string) {
-    return this.movieService.reject(id);
-  }
 }
