@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createReviewDto: CreateReviewDto, userId: string) {
     const { movieId, rating, comment } = createReviewDto;
@@ -24,6 +24,25 @@ export class ReviewsService {
     });
   }
 
+  async findForSingleMovie(userId: string, movieId: string) {
+    const aggregate = await this.prisma.review.aggregate({
+      _avg: {
+        rating: true,
+      },
+      where: { 
+        movieId: movieId 
+      },
+    });
+
+    const avg_rating = aggregate._avg.rating;
+    
+    if (avg_rating === null) {
+      throw new NotFoundException("Movie is not rated yet");
+    }
+
+    return { avg_rating };
+  }
+
   async findByMovieId(movieId: string) {
     return this.prisma.review.findMany({
       where: { movieId },
@@ -41,9 +60,9 @@ export class ReviewsService {
     if (!review) throw new NotFoundException("Review not found");
 
     if (review.userId !== userId && role !== 'ADMIN') {
-        throw new NotFoundException("Unauthorized to delete this review");
+      throw new NotFoundException("Unauthorized to delete this review");
     }
-    
+
     return this.prisma.review.delete({
       where: { id }
     });
