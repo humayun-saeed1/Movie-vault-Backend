@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { CreateActorDto } from './dto/create-actor.dto.js';
 import { UpdateActorDto } from './dto/update-actor.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -102,7 +102,14 @@ export class ActorService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: any) {
+    const actor = await this.prisma.actors.findUnique({ where: { id } });
+    if (!actor) throw new NotFoundException('Actor not found');
+
+    if (user.role === 'EDITOR' && actor.createrId !== user.id) {
+      throw new UnauthorizedException('You can only delete your own created actors');
+    }
+
     return this.prisma.actors.delete({
       where: {
         id

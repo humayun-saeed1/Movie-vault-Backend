@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
@@ -177,7 +177,14 @@ export class MovieService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: any) {
+    const movie = await this.prisma.movie.findUnique({ where: { id } });
+    if (!movie) throw new NotFoundException('Movie not found');
+    
+    if (user.role === 'EDITOR' && movie.createrId !== user.id) {
+      throw new UnauthorizedException('You can only delete your own created movies');
+    }
+
     return this.prisma.movie.delete({
       where: { id }
     });

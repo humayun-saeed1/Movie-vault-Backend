@@ -55,8 +55,8 @@ export class ActorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Delete('delete/:id')
-  remove(@Param('id') id: string) {
-    return this.actorService.remove(id);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.actorService.remove(id, req.user);
   }
 
 

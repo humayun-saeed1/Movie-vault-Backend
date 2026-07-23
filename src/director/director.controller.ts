@@ -57,8 +57,8 @@ export class DirectorController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles('Admin', 'Editor')
   @Delete('delete/:id')
-  remove(@Param('id') id: string) {
-    return this.directorService.remove(id);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.directorService.remove(id, req.user);
   }
 
 

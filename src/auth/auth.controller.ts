@@ -35,7 +35,7 @@ export class AuthController {
   @Roles('Admin')
   @Post('create-editor')
   createEditor(@Body() registerDto: RegisterDto) {
-    return this.authService.register({ ...registerDto, role: 'EDITOR' });
+    return this.authService.register({ ...registerDto, role: registerDto.role || 'EDITOR' });
   }
 
   @ApiBearerAuth()

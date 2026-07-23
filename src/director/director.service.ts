@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { CreateDirectorDto } from './dto/create-director.dto.js';
 import { UpdateDirectorDto } from './dto/update-director.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -95,7 +95,14 @@ export class DirectorService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: any) {
+    const director = await this.prisma.director.findUnique({ where: { id } });
+    if (!director) throw new NotFoundException('Director not found');
+
+    if (user.role === 'EDITOR' && director.createrId !== user.id) {
+      throw new UnauthorizedException('You can only delete your own created directors');
+    }
+
     return this.prisma.director.delete({
       where: { id }
     });
