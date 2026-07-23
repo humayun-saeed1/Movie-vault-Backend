@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
 import { FavouriteModule } from './favourite/favourite.module.js';
 import { WatchlistModule } from './watchlist/watchlist.module.js';
+import { CloudinaryModule } from './cloudinary/cloudinary.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WatchlistModule } from './watchlist/watchlist.module.js';
     ReviewsModule,
     FavouriteModule,
     WatchlistModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
