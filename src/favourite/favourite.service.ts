@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { calculateAverageRating } from '../utils/movie.util.js';
 
 @Injectable()
 export class FavouriteService {
@@ -47,8 +48,7 @@ export class FavouriteService {
     
     return favs.map(f => {
        const movie = f.movie;
-       const reviews = movie.reviews;
-       const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+       const avgRating = calculateAverageRating(movie.reviews);
        return { ...movie, averageRating: avgRating };
     });
   }
