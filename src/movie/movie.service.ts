@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/co
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
+import { mapMoviesWithAverageRating } from '../utils/movie.util.js';
+import { formatPaginatedResponse } from '../utils/pagination.util.js';
 
 @Injectable()
 export class MovieService {
@@ -78,12 +80,7 @@ export class MovieService {
         include: { actors: true, directors: true, reviews: { select: { rating: true } } },
       });
 
-      const moviesWithRating = allMovies.map(movie => {
-        const avg = movie.reviews.length > 0 
-          ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length 
-          : 0;
-        return { ...movie, averageRating: avg };
-      });
+      const moviesWithRating = mapMoviesWithAverageRating(allMovies);
 
       moviesWithRating.sort((a, b) => {
         return sortOrder === 'asc' ? a.averageRating - b.averageRating : b.averageRating - a.averageRating;
@@ -96,15 +93,7 @@ export class MovieService {
       }
 
       if (page && limit) {
-        const pageNumber = parseInt(page);
-        const limitNumber = parseInt(limit);
-        return {
-          movies: paginated,
-          total,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(total / limitNumber)
-        };
+        return formatPaginatedResponse(paginated, total, page, limit);
       }
       return paginated;
     } else {
@@ -120,23 +109,10 @@ export class MovieService {
         this.prisma.movie.count({ where: whereClause })
       ]);
 
-      const moviesWithRating = movies.map(movie => {
-        const avg = movie.reviews.length > 0 
-          ? movie.reviews.reduce((sum, r) => sum + r.rating, 0) / movie.reviews.length 
-          : 0;
-        return { ...movie, averageRating: avg };
-      });
+      const moviesWithRating = mapMoviesWithAverageRating(movies);
 
       if (page && limit) {
-        const pageNumber = parseInt(page);
-        const limitNumber = parseInt(limit);
-        return {
-          movies: moviesWithRating,
-          total,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(total / limitNumber)
-        };
+        return formatPaginatedResponse(moviesWithRating, total, page, limit);
       }
 
       return moviesWithRating;
