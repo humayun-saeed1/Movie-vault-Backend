@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, UseInterceptors, UploadedFile, BadRequestException, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service.js';
 import { MovieService } from './movie.service.js';
@@ -25,7 +25,15 @@ export class MovieController {
   async create(
     @Body() createMovieDto: CreateMovieDto, 
     @Req() req,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|webp)' }),
+        ],
+        fileIsRequired: false,
+      }),
+    ) file?: Express.Multer.File
   ) {
     if (file) {
       const result = await this.cloudinaryService.uploadImage(file).catch(() => {
@@ -68,7 +76,15 @@ export class MovieController {
     @Param('id') id: string, 
     @Body() updateMovieDto: UpdateMovieDto, 
     @Req() req,
-    @UploadedFile() file?: Express.Multer.File
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|webp)' }),
+        ],
+        fileIsRequired: false,
+      }),
+    ) file?: Express.Multer.File
   ) {
     if (file) {
       const result = await this.cloudinaryService.uploadImage(file).catch(() => {
