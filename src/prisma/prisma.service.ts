@@ -7,6 +7,8 @@ const { Pool } = pg;
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private pool: pg.Pool;
+
   constructor() {
     // 1. Initialize the PostgreSQL connection pool
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -16,6 +18,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // 3. Pass the adapter to the PrismaClient constructor
     super({ adapter });
+
+    this.pool = pool;
   }
 
   async onModuleInit() {
@@ -24,5 +28,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleDestroy() {
     await this.$disconnect();
+    // Close the postgres connection pool to allow the process to exit
+    await this.pool.end();
   }
 }

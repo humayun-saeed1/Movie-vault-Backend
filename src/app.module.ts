@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration.js';
 import { AppController } from './app.controller.js';
@@ -17,6 +18,25 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module.js';
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        customSuccessMessage: function (req, res) {
+          return `${req.method} ${req.url} ${res.statusCode}`;
+        },
+        customErrorMessage: function (req, res, err) {
+          return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`;
+        },
+        transport: process.env.NODE_ENV !== 'production' ? {
+          target: 'pino-pretty',
+          options: {
+            singleLine: true,
+            colorize: true,
+            ignore: 'req,res,context',
+          }
+        } : undefined,
+        autoLogging: true,
+      }
     }),
     MovieModule,
     ActorModule,
