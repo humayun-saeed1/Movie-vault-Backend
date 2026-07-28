@@ -1,52 +1,59 @@
+import { jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { WatchlistController } from './watchlist.controller.js';
 import { WatchlistService } from './watchlist.service.js';
-import { AuthGuard } from '../auth/auth.guard.js';
-import { RoleGuard } from '../auth/role.guard.js';
-import { jest } from '@jest/globals';
+import { JwtService } from '@nestjs/jwt';
+import { AuthService } from '../auth/auth.service.js';
 
 describe('WatchlistController', () => {
   let controller: WatchlistController;
+  let watchlistService: WatchlistService;
 
   const mockWatchlistService = {
     toggle: jest.fn(),
     getMyWatchlist: jest.fn(),
   };
 
+  const mockJwtService = { verifyAsync: jest.fn() };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WatchlistController],
       providers: [
-        {
-          provide: WatchlistService,
-          useValue: mockWatchlistService,
-        }
+        { provide: WatchlistService, useValue: mockWatchlistService },
+        { provide: JwtService, useValue: mockJwtService },
+        { provide: AuthService, useValue: {} },
       ],
-    })
-    .overrideGuard(AuthGuard)
-    .useValue({ canActivate: () => true })
-    .overrideGuard(RoleGuard)
-    .useValue({ canActivate: () => true })
-    .compile();
+    }).compile();
 
     controller = module.get<WatchlistController>(WatchlistController);
+    watchlistService = module.get<WatchlistService>(WatchlistService);
+    jest.clearAllMocks();
   });
 
-  it('should toggle a movie in watchlist', async () => {
-    const response = { status: 'added' };
-    mockWatchlistService.toggle.mockResolvedValue(response);
-    const fakeReq = { user: { id: '123' } };
-    
-    const result = await controller.toggle('movie1', fakeReq);
-    expect(result).toEqual(response);
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 
-  it('should get my watchlist', async () => {
-    const list = [{ id: '1' }];
-    mockWatchlistService.getMyWatchlist.mockResolvedValue(list);
-    const fakeReq = { user: { id: '123' } };
-    
-    const result = await controller.getMyWatchlist(fakeReq, {});
-    expect(result).toEqual(list);
+  describe('toggle', () => {
+    it('should call watchlistService.toggle', async () => {
+      const req = { user: { id: 'u1' } };
+      mockWatchlistService.toggle.mockResolvedValue({ status: 'added' });
+      
+      const result = await controller.toggle('m1', req);
+      expect(result).toEqual({ status: 'added' });
+      expect(watchlistService.toggle).toHaveBeenCalledWith('m1', 'u1');
+    });
+  });
+
+  describe('getMyWatchlist', () => {
+    it('should call watchlistService.getMyWatchlist', async () => {
+      const req = { user: { id: 'u1' } };
+      mockWatchlistService.getMyWatchlist.mockResolvedValue([{ id: 'm1' }]);
+      
+      const result = await controller.getMyWatchlist(req);
+      expect(result).toEqual([{ id: 'm1' }]);
+      expect(watchlistService.getMyWatchlist).toHaveBeenCalledWith('u1');
+    });
   });
 });

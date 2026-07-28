@@ -1,87 +1,126 @@
+import { jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ActorController } from './actor.controller.js';
 import { ActorService } from './actor.service.js';
-import { AuthGuard } from '../auth/auth.guard.js';
-import { RoleGuard } from '../auth/role.guard.js';
-import { jest } from '@jest/globals';
-
 import { CloudinaryService } from '../cloudinary/cloudinary.service.js';
+import { CreateActorDto } from './dto/create-actor.dto.js';
+import { UpdateActorDto } from './dto/update-actor.dto.js';
+import { BadRequestException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { AuthService } from '../auth/auth.service.js';
 
 describe('ActorController', () => {
   let controller: ActorController;
-  
+  let actorService: ActorService;
+  let cloudinaryService: CloudinaryService;
+
   const mockActorService = {
-    findAll: jest.fn(),
     create: jest.fn(),
+    findAll: jest.fn(),
+    findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
-    findOne: jest.fn(),
   };
+
+  const mockCloudinaryService = {
+    uploadImage: jest.fn(),
+  };
+
+  const mockJwtService = { verifyAsync: jest.fn() };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ActorController],
       providers: [
-        {
-          provide: ActorService,
-          useValue: mockActorService,
-        },
-        {
-          provide: CloudinaryService,
-          useValue: { uploadImage: jest.fn() },
-        }
+        { provide: ActorService, useValue: mockActorService },
+        { provide: CloudinaryService, useValue: mockCloudinaryService },
+        { provide: JwtService, useValue: mockJwtService },
+        { provide: AuthService, useValue: {} },
       ],
-    })
-    .overrideGuard(AuthGuard)
-    .useValue({ canActivate: () => true })
-    .overrideGuard(RoleGuard)
-    .useValue({ canActivate: () => true })
-    .compile();
+    }).compile();
 
     controller = module.get<ActorController>(ActorController);
+    actorService = module.get<ActorService>(ActorService);
+    cloudinaryService = module.get<CloudinaryService>(CloudinaryService);
+    jest.clearAllMocks();
   });
 
-  it('should findAll actors', async () => {
-    const actors = [
-      { id: '1', name: 'Actor 1' },
-      { id: '2', name: 'Actor 2' },
-    ];
-    mockActorService.findAll.mockResolvedValue(actors);
-    const fakeReq = { user: { id: '123', role: 'ADMIN' } };
-    const fakeQuery = {};
-    const result = await controller.findAll(fakeReq, fakeQuery);
-    expect(result).toEqual(actors);
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 
-  it('should create an actor', async () => {
-    const actor = { id: '1', name: 'Actor 1' };
-    mockActorService.create.mockResolvedValue(actor);
-    const fakeBody = { name: 'Actor 1' };
-    const fakeReq = { user: { id: '123', role: 'ADMIN' } };
-    const result = await controller.create(fakeBody, fakeReq);
-    expect(result).toEqual(actor);
+  describe('create', () => {
+    const dto: CreateActorDto = { name: 'Actor', age: 30, about: 'Bio', imageURL: '', movieID: [] };
+    const req = { user: { id: 'u1', role: 'ADMIN' } };
+
+    it('should create an actor without file upload', async () => {
+      mockActorService.create.mockResolvedValue({ id: '1' });
+      const result = await controller.create(dto, req, undefined);
+      expect(result).toEqual({ id: '1' });
+      expect(actorService.create).toHaveBeenCalledWith(dto, 'u1', 'ADMIN');
+    });
+
+    it('should upload file and create actor if file provided', async () => {
+      const file = {} as Express.Multer.File;
+      mockCloudinaryService.uploadImage.mockResolvedValue({ secure_url: 'http://image.com' });
+      mockActorService.create.mockResolvedValue({ id: '1' });
+
+      await controller.create(dto, req, file);
+      expect(cloudinaryService.uploadImage).toHaveBeenCalledWith(file);
+      expect(dto.imageURL).toEqual('http://image.com');
+    });
+
+    it('should throw BadRequestException if upload fails', async () => {
+      const file = {} as Express.Multer.File;
+      mockCloudinaryService.uploadImage.mockRejectedValue(new Error('fail'));
+      await expect(controller.create(dto, req, file)).rejects.toThrow(BadRequestException);
+    });
   });
 
-  it('should find one actor by id', async () => {
-    const actor = { id: '1', name: 'Actor 1' };
-    mockActorService.findOne.mockResolvedValue(actor);
-    const result = await controller.findOne('1');
-    expect(result).toEqual(actor);
+  describe('findAll', () => {
+    it('should call actorService.findAll', () => {
+      mockActorService.findAll.mockReturnValue([]);
+      const result = controller.findAll({ user: { id: 'u1', role: 'ADMIN' } }, {});
+      expect(result).toEqual([]);
+      expect(actorService.findAll).toHaveBeenCalledWith('u1', 'ADMIN', {});
+    });
   });
 
-  it('should update an actor', async () => {
-    const actor = { id: '1', name: 'Actor 1' };
-    mockActorService.update.mockResolvedValue(actor);
-    const fakeBody = { name: 'Actor 1' };
-    const fakeReq = { user: { id: '123', role: 'ADMIN' } };
-    const result = await controller.update('1', fakeBody, fakeReq);
-    expect(result).toEqual(actor);
+  describe('findOne', () => {
+    it('should call actorService.findOne', () => {
+      mockActorService.findOne.mockReturnValue({ id: '1' });
+      const result = controller.findOne('1');
+      expect(result).toEqual({ id: '1' });
+    });
   });
 
-  it('should delete an actor', async () => {
-    const actor = { id: '1', name: 'Actor 1' };
-    mockActorService.remove.mockResolvedValue(actor);
-    const fakeReq = { user: { id: '123', role: 'ADMIN' } };
-    const result = await controller.remove(fakeReq, '1');
-    expect(result).toEqual(actor);
+  describe('update', () => {
+    const dto: UpdateActorDto = { name: 'Actor 2' };
+    const req = { user: { id: 'u1', role: 'ADMIN' } };
+
+    it('should update an actor without file upload', async () => {
+      mockActorService.update.mockResolvedValue({ id: '1' });
+      const result = await controller.update('1', dto, req, undefined);
+      expect(result).toEqual({ id: '1' });
+    });
+
+    it('should upload file and update actor if file provided', async () => {
+      const file = {} as Express.Multer.File;
+      mockCloudinaryService.uploadImage.mockResolvedValue({ secure_url: 'http://image2.com' });
+      mockActorService.update.mockResolvedValue({ id: '1' });
+
+      await controller.update('1', dto, req, file);
+      expect(dto.imageURL).toEqual('http://image2.com');
+    });
+  });
+
+  describe('remove', () => {
+    it('should call actorService.remove', () => {
+      mockActorService.remove.mockReturnValue({ id: '1' });
+      const req = { user: { id: 'u1', role: 'ADMIN' } };
+      const result = controller.remove('1', req);
+      expect(result).toEqual({ id: '1' });
+      expect(actorService.remove).toHaveBeenCalledWith('1', req.user);
+    });
   });
 });
