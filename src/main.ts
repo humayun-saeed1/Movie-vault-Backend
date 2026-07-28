@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,6 +12,8 @@ async function bootstrap() {
     whitelist: true,
     transform: true
    }));
+  app.useLogger(app.get(Logger));
+  app.useGlobalFilters(new GlobalExceptionFilter());
   
   const config = new DocumentBuilder()
     .setTitle('Movie Vault Single CRUD')
