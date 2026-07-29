@@ -33,9 +33,6 @@ describe('WatchlistService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
 
   describe('toggle', () => {
     it('should throw NotFoundException if movie does not exist', async () => {
@@ -83,14 +80,14 @@ describe('WatchlistService', () => {
         { movie: { id: 'm1', name: 'Movie 1', reviews: [{ rating: 5 }] } }
       ];
       mockPrismaService.watchlist.findMany.mockResolvedValue(mockMovies);
-      
+
       const result = await service.getMyWatchlist('u1');
       expect(result).toEqual([{ id: 'm1', name: 'Movie 1', reviews: [{ rating: 5 }], averageRating: 5 }]);
     });
 
     it('should return an empty array if the user has no movies in the watchlist', async () => {
       mockPrismaService.watchlist.findMany.mockResolvedValue([]);
-      
+
       const result = await service.getMyWatchlist('u1');
       expect(result).toEqual([]);
     });
@@ -100,7 +97,7 @@ describe('WatchlistService', () => {
         { movie: { id: 'm1', name: 'Movie 1', reviews: [] } }
       ];
       mockPrismaService.watchlist.findMany.mockResolvedValue(mockMovies);
-      
+
       const result = await service.getMyWatchlist('u1');
       expect(result).toEqual([{ id: 'm1', name: 'Movie 1', reviews: [], averageRating: 0 }]);
     });
