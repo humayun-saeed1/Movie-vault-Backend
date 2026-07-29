@@ -12,12 +12,12 @@ describe('MovieService', () => {
 
   const mockPrismaService = {
     movie: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      create: jest.fn<any>(),
+      findMany: jest.fn<any>(),
+      count: jest.fn<any>(),
+      findUnique: jest.fn<any>(),
+      update: jest.fn<any>(),
+      delete: jest.fn<any>(),
     },
   };
 
