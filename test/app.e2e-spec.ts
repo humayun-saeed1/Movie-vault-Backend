@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
@@ -30,6 +30,7 @@ describe('AppController (e2e)', () => {
       next();
     });
 
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     await app.init();
 
     // Create the test user in the database so that nested writes for 'creator' succeed
@@ -115,6 +116,17 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it("/actor/create (POST) should return 400 when sending invalid data (Unhappy Path)", () => {
+    return request(app.getHttpServer())
+      .post('/actor/create')
+      .send({
+        // Missing name
+        age: "forty-eight", // Should be number
+        about: 123, // Should be string
+      })
+      .expect(400);
+  });
+
   it("/director/create (POST) should return 201", () => {
     return request(app.getHttpServer())
       .post('/director/create')
@@ -175,6 +187,16 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it("/movie/create (POST) should return 400 for invalid data (Unhappy Path)", () => {
+    return request(app.getHttpServer())
+      .post('/movie/create')
+      .send({
+        // Missing name, posterURl, releaseyear, duration, trailerURL
+        genre: 123, // Should be string
+      })
+      .expect(400);
+  });
+
   it ("/movie/add-director/:id (PATCH) should return 200", () => {
     return request(app.getHttpServer())
       .patch(`/movie/edit/${movieId}`) // Using edit endpoint!
@@ -226,6 +248,17 @@ describe('AppController (e2e)', () => {
         expect(res.body).toHaveProperty('comment', 'Great movie!');
         expect(res.body).toHaveProperty('movieId', movieId);
       });
+  });
+
+  it("/reviews (POST) should return 400 for invalid rating or missing movieId (Unhappy Path)", () => {
+    return request(app.getHttpServer())
+      .post('/reviews')
+      .send({
+        rating: "eight", // Should be number
+        comment: "Great movie!",
+        // Missing movieId
+      })
+      .expect(400);
   });
 
   it("/reviews/movie/:movieId (GET) should return 200", () => {
