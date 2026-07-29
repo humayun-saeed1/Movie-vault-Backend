@@ -47,6 +47,13 @@ describe('ReviewsController', () => {
       expect(result).toEqual({ id: 'r1' });
       expect(reviewsService.create).toHaveBeenCalledWith(dto, 'u1');
     });
+
+    it('should bubble up exception from reviewsService.create', async () => {
+      const dto: CreateReviewDto = { movieId: 'm1', rating: 5, comment: 'good' };
+      const req = { user: { id: 'u1' } };
+      mockReviewsService.create.mockRejectedValue(new Error('Create failed'));
+      await expect(controller.create(dto, req)).rejects.toThrow('Create failed');
+    });
   });
 
   describe('findByMovieId', () => {
@@ -55,6 +62,11 @@ describe('ReviewsController', () => {
       const result = await controller.findByMovieId('m1');
       expect(result).toEqual([{ id: 'r1' }]);
       expect(reviewsService.findByMovieId).toHaveBeenCalledWith('m1');
+    });
+
+    it('should bubble up exception from reviewsService.findByMovieId', async () => {
+      mockReviewsService.findByMovieId.mockRejectedValue(new Error('Find failed'));
+      await expect(controller.findByMovieId('m1')).rejects.toThrow('Find failed');
     });
   });
 
@@ -66,6 +78,12 @@ describe('ReviewsController', () => {
       const result = await controller.remove('r1', req);
       expect(result).toEqual({ id: 'r1' });
       expect(reviewsService.remove).toHaveBeenCalledWith('r1', 'u1', 'VIEWER');
+    });
+
+    it('should bubble up exception from reviewsService.remove', async () => {
+      const req = { user: { id: 'u1', role: 'VIEWER' } };
+      mockReviewsService.remove.mockRejectedValue(new Error('Remove failed'));
+      await expect(controller.remove('r1', req)).rejects.toThrow('Remove failed');
     });
   });
 });

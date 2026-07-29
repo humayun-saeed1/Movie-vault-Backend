@@ -120,7 +120,7 @@ export class MovieService {
   }
 
   async findOne(id: string) {
-    return this.prisma.movie.findUnique({
+    const movie = await this.prisma.movie.findUnique({
       where: { id },
       include: {
         actors: true,
@@ -133,24 +133,31 @@ export class MovieService {
         }
       }
     });
+    if (!movie) throw new NotFoundException('Movie not found');
+    return movie;
   }
 
   async update(id: string, updateMovieDto: UpdateMovieDto, role: string) {
     const { actorID, directorID, ...movieData } = updateMovieDto;
 
-    return this.prisma.movie.update({
-      where: { id },
-      data: {
-        ...movieData,
+    try {
+      return await this.prisma.movie.update({
+        where: { id },
+        data: {
+          ...movieData,
 
-        actors: actorID ? {
-          set: actorID.map(id => ({ id }))
-        } : undefined,
-        directors: directorID ? {
-          set: directorID.map(id => ({ id }))
-        } : undefined
-      }
-    });
+          actors: actorID ? {
+            set: actorID.map(id => ({ id }))
+          } : undefined,
+          directors: directorID ? {
+            set: directorID.map(id => ({ id }))
+          } : undefined
+        }
+      });
+    } catch (error: any) {
+      if (error.code === 'P2025') throw new NotFoundException('Movie not found');
+      throw error;
+    }
   }
 
   async remove(id: string, user: any) {

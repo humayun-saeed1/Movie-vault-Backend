@@ -49,6 +49,14 @@ describe('AuthController', () => {
       expect(authService.register).toHaveBeenCalledWith(dto);
       expect(result).toEqual(expectedResult);
     });
+
+    it('should bubble up exceptions from authService.register', async () => {
+      const dto: RegisterDto = { username: 'test', email: 't@t.com', password: 'pw', role: 'VIEWER' };
+      const error = new Error('Conflict');
+      mockAuthService.register.mockRejectedValue(error);
+
+      await expect(controller.create(dto)).rejects.toThrow('Conflict');
+    });
   });
 
   describe('login (signin)', () => {
@@ -60,6 +68,14 @@ describe('AuthController', () => {
       const result = await controller.login(dto);
       expect(authService.login).toHaveBeenCalledWith(dto);
       expect(result).toEqual(expectedResult);
+    });
+
+    it('should bubble up exceptions from authService.login', async () => {
+      const dto: LoginDto = { identity: 't@t.com', password: 'pw' };
+      const error = new Error('Unauthorized');
+      mockAuthService.login.mockRejectedValue(error);
+
+      await expect(controller.login(dto)).rejects.toThrow('Unauthorized');
     });
   });
 
@@ -77,9 +93,7 @@ describe('AuthController', () => {
       const dto: RegisterDto = { username: 'editor', email: 'e@e.com', password: 'pw', role: 'VIEWER' };
       mockAuthService.register.mockResolvedValue({ message: 'Success' });
       await controller.createEditor(dto);
-      expect(authService.register).toHaveBeenCalledWith({ ...dto, role: 'VIEWER' }); 
-      // Note: In controller it says role: registerDto.role || 'EDITOR'
-      // Wait, if we pass 'VIEWER', it keeps 'VIEWER'. If we pass undefined, it uses 'EDITOR'.
+      expect(authService.register).toHaveBeenCalledWith({ ...dto, role: 'EDITOR' }); 
     });
 
     it('should use default EDITOR if no role is provided', async () => {

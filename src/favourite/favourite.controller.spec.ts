@@ -44,6 +44,12 @@ describe('FavouriteController', () => {
       expect(result).toEqual({ status: 'added' });
       expect(favouriteService.toggle).toHaveBeenCalledWith('m1', 'u1');
     });
+
+    it('should bubble up exception from favouriteService.toggle', async () => {
+      const req = { user: { id: 'u1' } };
+      mockFavouriteService.toggle.mockRejectedValue(new Error('Toggle failed'));
+      await expect(controller.toggle('m1', req)).rejects.toThrow('Toggle failed');
+    });
   });
 
   describe('getMyFavourites', () => {
@@ -54,6 +60,12 @@ describe('FavouriteController', () => {
       const result = await controller.getMyFavourites(req);
       expect(result).toEqual([{ id: 'm1' }]);
       expect(favouriteService.getMyFavourites).toHaveBeenCalledWith('u1');
+    });
+
+    it('should bubble up exception from favouriteService.getMyFavourites', async () => {
+      const req = { user: { id: 'u1' } };
+      mockFavouriteService.getMyFavourites.mockRejectedValue(new Error('Get failed'));
+      await expect(controller.getMyFavourites(req)).rejects.toThrow('Get failed');
     });
   });
 });

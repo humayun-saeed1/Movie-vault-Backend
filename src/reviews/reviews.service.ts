@@ -44,6 +44,9 @@ export class ReviewsService {
   }
 
   async findByMovieId(movieId: string) {
+    const movie = await this.prisma.movie.findUnique({ where: { id: movieId } });
+    if (!movie) throw new NotFoundException("Movie not found");
+
     return this.prisma.review.findMany({
       where: { movieId },
       include: {

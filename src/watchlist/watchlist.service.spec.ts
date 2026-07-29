@@ -67,6 +67,14 @@ describe('WatchlistService', () => {
         }
       });
     });
+
+    it('should bubble up error if Prisma throws during create (e.g. invalid userId)', async () => {
+      mockPrismaService.movie.findUnique.mockResolvedValue({ id: 'm1' });
+      mockPrismaService.watchlist.findUnique.mockResolvedValue(null);
+      mockPrismaService.watchlist.create.mockRejectedValue(new Error('Prisma error'));
+
+      await expect(service.toggle('m1', 'invalid-user')).rejects.toThrow('Prisma error');
+    });
   });
 
   describe('getMyWatchlist', () => {
@@ -78,6 +86,23 @@ describe('WatchlistService', () => {
       
       const result = await service.getMyWatchlist('u1');
       expect(result).toEqual([{ id: 'm1', name: 'Movie 1', reviews: [{ rating: 5 }], averageRating: 5 }]);
+    });
+
+    it('should return an empty array if the user has no movies in the watchlist', async () => {
+      mockPrismaService.watchlist.findMany.mockResolvedValue([]);
+      
+      const result = await service.getMyWatchlist('u1');
+      expect(result).toEqual([]);
+    });
+
+    it('should return movies with an averageRating of 0 if they have no reviews', async () => {
+      const mockMovies = [
+        { movie: { id: 'm1', name: 'Movie 1', reviews: [] } }
+      ];
+      mockPrismaService.watchlist.findMany.mockResolvedValue(mockMovies);
+      
+      const result = await service.getMyWatchlist('u1');
+      expect(result).toEqual([{ id: 'm1', name: 'Movie 1', reviews: [], averageRating: 0 }]);
     });
   });
 });

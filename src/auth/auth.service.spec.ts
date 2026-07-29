@@ -93,6 +93,7 @@ describe('AuthService', () => {
         data: expect.objectContaining({ role: Role.EDITOR })
       }));
     });
+
   });
 
   describe('login', () => {
@@ -120,6 +121,23 @@ describe('AuthService', () => {
       expect(result.user).toEqual({ id: '1', username: 'testuser', role: Role.VIEWER });
       expect(mockJwtService.signAsync).toHaveBeenCalledWith({ sub: '1', username: 'testuser', role: Role.VIEWER });
     });
+
+    it('should allow login with username instead of email', async () => {
+      const hashedPw = await bcrypt.hash('password123', 1);
+      const user = { id: '1', username: 'testuser', password: hashedPw, role: Role.VIEWER };
+      mockPrismaService.user.findFirst.mockResolvedValue(user);
+      mockJwtService.signAsync.mockResolvedValue('fake-jwt-token');
+
+      const usernameDto = { identity: 'testuser', password: 'password123' };
+      const result = await service.login(usernameDto);
+      expect(result.token).toEqual('fake-jwt-token');
+      expect(mockPrismaService.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [{ email: 'testuser' }, { username: 'testuser' }]
+        }
+      });
+    });
+
   });
 
   describe('getAllUsers', () => {

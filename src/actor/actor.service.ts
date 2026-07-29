@@ -28,6 +28,7 @@ export class ActorService {
     }
     catch (error) {
       console.error(error);
+      throw error;
     }
   }
 
@@ -76,7 +77,7 @@ export class ActorService {
   }
 
   async findOne(id: string) {
-    return this.prisma.actors.findUnique({
+    const actor = await this.prisma.actors.findUnique({
       include: {
         movies: true
       },
@@ -84,22 +85,29 @@ export class ActorService {
         id
       }
     });
+    if (!actor) throw new NotFoundException('Actor not found');
+    return actor;
   }
 
   async update(id: string, updateActorDto: UpdateActorDto, role: string) {
     const { movieID, ...actorData } = updateActorDto;
-    return this.prisma.actors.update({
-      where: {
-        id
-      },
-      data: {
-        ...actorData,
+    try {
+      return await this.prisma.actors.update({
+        where: {
+          id
+        },
+        data: {
+          ...actorData,
 
-        movies: movieID ? {
-          set: movieID.map((id: string) => ({ id }))
-        } : undefined
-      }
-    });
+          movies: movieID ? {
+            set: movieID.map((id: string) => ({ id }))
+          } : undefined
+        }
+      });
+    } catch (error: any) {
+      if (error.code === 'P2025') throw new NotFoundException('Actor not found');
+      throw error;
+    }
   }
 
   async remove(id: string, user: any) {

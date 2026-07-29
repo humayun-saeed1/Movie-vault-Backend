@@ -44,6 +44,12 @@ describe('WatchlistController', () => {
       expect(result).toEqual({ status: 'added' });
       expect(watchlistService.toggle).toHaveBeenCalledWith('m1', 'u1');
     });
+
+    it('should bubble up exception from watchlistService.toggle', async () => {
+      const req = { user: { id: 'u1' } };
+      mockWatchlistService.toggle.mockRejectedValue(new Error('Toggle failed'));
+      await expect(controller.toggle('m1', req)).rejects.toThrow('Toggle failed');
+    });
   });
 
   describe('getMyWatchlist', () => {
@@ -54,6 +60,12 @@ describe('WatchlistController', () => {
       const result = await controller.getMyWatchlist(req);
       expect(result).toEqual([{ id: 'm1' }]);
       expect(watchlistService.getMyWatchlist).toHaveBeenCalledWith('u1');
+    });
+
+    it('should bubble up exception from watchlistService.getMyWatchlist', async () => {
+      const req = { user: { id: 'u1' } };
+      mockWatchlistService.getMyWatchlist.mockRejectedValue(new Error('Get failed'));
+      await expect(controller.getMyWatchlist(req)).rejects.toThrow('Get failed');
     });
   });
 });
