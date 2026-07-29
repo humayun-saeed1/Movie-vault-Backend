@@ -75,6 +75,14 @@ describe('MovieController', () => {
       mockCloudinaryService.uploadImage.mockRejectedValue(new Error('fail'));
       await expect(controller.create(dto, req, file)).rejects.toThrow(BadRequestException);
     });
+
+    it('should bubble up exception from movieService.create', async () => {
+      const file = {} as Express.Multer.File;
+      mockCloudinaryService.uploadImage.mockResolvedValue({ secure_url: 'http://image.com' });
+      mockMovieService.create.mockRejectedValue(new Error('Database error'));
+
+      await expect(controller.create(dto, req, file)).rejects.toThrow('Database error');
+    });
   });
 
   describe('findAll', () => {
@@ -91,6 +99,11 @@ describe('MovieController', () => {
       mockMovieService.findOne.mockReturnValue({ id: '1' });
       const result = controller.findOne('1');
       expect(result).toEqual({ id: '1' });
+    });
+
+    it('should bubble up exception from movieService.findOne', () => {
+      mockMovieService.findOne.mockImplementation(() => { throw new Error('Not found'); });
+      expect(() => controller.findOne('1')).toThrow('Not found');
     });
   });
 
@@ -112,6 +125,11 @@ describe('MovieController', () => {
       await controller.update('1', dto, req, file);
       expect(dto.posterURl).toEqual('http://image2.com');
     });
+
+    it('should bubble up exception from movieService.update', async () => {
+      mockMovieService.update.mockRejectedValue(new Error('Update failed'));
+      await expect(controller.update('1', dto, req, undefined)).rejects.toThrow('Update failed');
+    });
   });
 
   describe('remove', () => {
@@ -121,6 +139,12 @@ describe('MovieController', () => {
       const result = controller.remove('1', req);
       expect(result).toEqual({ id: '1' });
       expect(movieService.remove).toHaveBeenCalledWith('1', req.user);
+    });
+
+    it('should bubble up exception from movieService.remove', () => {
+      mockMovieService.remove.mockImplementation(() => { throw new Error('Remove failed'); });
+      const req = { user: { id: 'u1', role: 'ADMIN' } };
+      expect(() => controller.remove('1', req)).toThrow('Remove failed');
     });
   });
 });

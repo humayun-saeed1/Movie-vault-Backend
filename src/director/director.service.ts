@@ -73,26 +73,33 @@ export class DirectorService {
   }
 
   async findOne(id: string) {
-    return this.prisma.director.findUnique({
+    const director = await this.prisma.director.findUnique({
       include: {
         movies: true
       },
       where: { id },
     });
+    if (!director) throw new NotFoundException('Director not found');
+    return director;
   }
 
   async update(id: string, updateDirectorDto: UpdateDirectorDto, role: string) {
     const { movieID, ...directorData } = updateDirectorDto;
-    return this.prisma.director.update({
-      where: { id },
-      data: {
-        ...directorData,
+    try {
+      return await this.prisma.director.update({
+        where: { id },
+        data: {
+          ...directorData,
 
-        movies: movieID ? {
-          set: movieID.map((id: string) => ({ id }))
-        } : undefined
-      }
-    });
+          movies: movieID ? {
+            set: movieID.map((id: string) => ({ id }))
+          } : undefined
+        }
+      });
+    } catch (error: any) {
+      if (error.code === 'P2025') throw new NotFoundException('Director not found');
+      throw error;
+    }
   }
 
   async remove(id: string, user: any) {

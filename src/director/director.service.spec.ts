@@ -70,6 +70,12 @@ describe('DirectorService', () => {
         },
       });
     });
+
+    it('should bubble up exception if Prisma throws error (e.g. invalid movieId)', async () => {
+      const dto: CreateDirectorDto = { name: 'Director', age: 40, about: 'Bio', imageURL: 'url', movieID: ['m1'] };
+      mockPrismaService.director.create.mockRejectedValue(new Error('Foreign Key Constraint Failed'));
+      await expect(service.create(dto, 'user1', 'ADMIN')).rejects.toThrow('Foreign Key Constraint Failed');
+    });
   });
 
   describe('findAll', () => {
@@ -97,6 +103,15 @@ describe('DirectorService', () => {
         totalPages: 1,
       });
     });
+
+    it('should handle invalid pagination and search parameters gracefully', async () => {
+      mockPrismaService.director.findMany.mockResolvedValue([{ id: '1', name: 'Director 1' }]);
+      mockPrismaService.director.count.mockResolvedValue(1);
+
+      const result = await service.findAll('user1', 'ADMIN', { page: '-1', limit: '0', search: '' });
+      expect(result).toBeDefined();
+      expect(mockPrismaService.director.findMany).toHaveBeenCalled();
+    });
   });
 
   describe('findOne', () => {
@@ -104,6 +119,11 @@ describe('DirectorService', () => {
       mockPrismaService.director.findUnique.mockResolvedValue({ id: '1', name: 'Director' });
       const result = await service.findOne('1');
       expect(result).toEqual({ id: '1', name: 'Director' });
+    });
+
+    it('should throw NotFoundException if director not found', async () => {
+      mockPrismaService.director.findUnique.mockResolvedValue(null);
+      await expect(service.findOne('999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -117,6 +137,12 @@ describe('DirectorService', () => {
         where: { id: '1' },
         data: { name: 'Updated', movies: undefined },
       });
+    });
+
+    it('should throw NotFoundException if director does not exist', async () => {
+      const dto: UpdateDirectorDto = { name: 'Updated' };
+      mockPrismaService.director.update.mockRejectedValue({ code: 'P2025' });
+      await expect(service.update('999', dto, 'ADMIN')).rejects.toThrow();
     });
   });
 

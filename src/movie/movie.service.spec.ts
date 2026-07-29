@@ -67,6 +67,12 @@ describe('MovieService', () => {
         })
       );
     });
+
+    it('should bubble up exception if Prisma throws error (e.g. invalid actorId)', async () => {
+      const dto: CreateMovieDto = { name: 'Movie', releaseyear: 2024, duration: 120, genre: 'Action', description: 'desc', posterURl: 'url', actorID: ['a1'] };
+      mockPrismaService.movie.create.mockRejectedValue(new Error('Foreign Key Constraint Failed'));
+      await expect(service.create(dto, 'u1', 'ADMIN')).rejects.toThrow('Foreign Key Constraint Failed');
+    });
   });
 
   describe('findAll', () => {
@@ -102,6 +108,15 @@ describe('MovieService', () => {
       expect(result[0].id).toEqual('2');
       expect(result[1].id).toEqual('1');
     });
+
+    it('should handle invalid pagination and search parameters gracefully', async () => {
+      mockPrismaService.movie.findMany.mockResolvedValue([{ id: '1', name: 'Movie 1', reviews: [] }]);
+      mockPrismaService.movie.count.mockResolvedValue(1);
+
+      const result = await service.findAll('u1', 'ADMIN', { page: '-1', limit: '0', search: '' });
+      expect(result).toBeDefined();
+      expect(mockPrismaService.movie.findMany).toHaveBeenCalled();
+    });
   });
 
   describe('findOne', () => {
@@ -109,6 +124,11 @@ describe('MovieService', () => {
       mockPrismaService.movie.findUnique.mockResolvedValue({ id: '1', name: 'Movie' });
       const result = await service.findOne('1');
       expect(result).toEqual({ id: '1', name: 'Movie' });
+    });
+
+    it('should throw NotFoundException if movie not found', async () => {
+      mockPrismaService.movie.findUnique.mockResolvedValue(null);
+      await expect(service.findOne('999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -122,6 +142,12 @@ describe('MovieService', () => {
         where: { id: '1' },
         data: { name: 'Updated', actors: undefined, directors: undefined },
       });
+    });
+
+    it('should throw NotFoundException if movie does not exist', async () => {
+      const dto: UpdateMovieDto = { name: 'Updated' };
+      mockPrismaService.movie.update.mockRejectedValue({ code: 'P2025' });
+      await expect(service.update('999', dto, 'ADMIN')).rejects.toThrow();
     });
   });
 

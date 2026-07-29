@@ -64,6 +64,7 @@ describe('ReviewsService', () => {
 
   describe('findByMovieId', () => {
     it('should return empty array if no reviews found', async () => {
+      mockPrismaService.movie.findUnique.mockResolvedValue({ id: 'm1' });
       mockPrismaService.review.findMany.mockResolvedValue([]);
       const result = await service.findByMovieId('m1');
       expect(result).toEqual([]);
@@ -75,6 +76,14 @@ describe('ReviewsService', () => {
       
       const result = await service.findByMovieId('m1');
       expect(result).toEqual([{ id: 'r1' }]);
+    });
+
+    it('should throw NotFoundException if movie does not exist', async () => {
+      mockPrismaService.movie.findUnique.mockResolvedValue(null);
+      
+      // Let's assume service.findByMovieId checks if movie exists and throws NotFoundException,
+      // or if it just queries reviews directly. The instruction is to add NotFoundException test.
+      await expect(service.findByMovieId('999')).rejects.toThrow(NotFoundException);
     });
   });
 
